@@ -14,7 +14,23 @@
 
 <div id="scoreDiv"></div>
 
+<button id="resetButton">Reset</button>
+
 <script type="text/javascript">
+
+// Reset button callback
+d3.select("#resetButton").on("click", function() {
+  numbers.sort(function(a, b) {
+    return d3.ascending(a.value, b.value);
+  });
+
+  numbers.forEach(function(d, i) {
+    d.index = i;
+  });
+
+  svg.selectAll(".number").transition()
+      .attr("transform", transform);
+});
 
 // Touching matrix
 var matrix = [
@@ -30,29 +46,31 @@ var matrix = [
   [5, 2, 4, 3, 3, 4, 5, 2, 5, 0]
 ];
 
-// Load images using d3 queue/defer
-var images = d3.range(0, 10).map(function(d) {
-  return d;
-});
+// Actual image dimensions
+var w = 42,
+    h = 69,
+    aspect = w / h;
 
-var imageWidth = 50;
-var imageHeight = 50;
+// Image display dimensions
+var imageWidth = 50,
+    imageHeight = imageWidth / aspect;
 
-var width = imageWidth * images.length;
-
-var numbers = images.map(function(d, i) {
+var numbers = d3.range(0, 10).map(function(d) {
   return {
-    value: i,
-    index: i,
-    image: d
+    value: d,
+    index: d,
+    image: "images/" + d + ".png"
   };
 });
+
+var width = imageWidth * numbers.length;
 
 // Size the SVG container
 var svg = d3.select("#sliderDiv").select("svg")
     .attr("width", width)
     .attr("height", imageHeight);
 
+// Initialize the score
 setScore();
 
 // Drag offset
@@ -119,12 +137,16 @@ var numEnter = num.enter().append("g")
     .attr("class", "number")
     .attr("transform", transform)
     .on("mouseover", function() {
+      svg.selectAll(".number > rect")
+          .style("fill-opacity", 0.5);
+
       d3.select(this).select("rect")
-          .style("stroke-width", 2)
+          .style("fill-opacity", 0)
+          .raise();
     })
     .on("mouseout", function() {
-      d3.select(this).select("rect")
-          .style("stroke-width", null);
+      svg.selectAll(".number > rect")
+          .style("fill-opacity", 0);
     })
     .call(drag);
 
@@ -132,13 +154,19 @@ var fillScale = d3.scaleLinear()
     .domain([0, numbers.length - 1])
     .range(["#000", "#fff"]);
 
+numEnter.append("image")
+    .attr("xlink:href", function(d) {
+      return d.image;
+    })
+    .attr("width", imageWidth)
+    .attr("height", imageHeight);
+
 numEnter.append("rect")
     .attr("width", imageWidth)
     .attr("height", imageHeight)
-    .style("fill", function(d) {
-      return fillScale(d.value);
-    })
-    .style("stroke", "#666");
+    .style("fill", "#fff")
+    .style("fill-opacity", 0)
+    .style("stroke", "none");
 
 function left(d) {
   return d.index * imageWidth;
@@ -162,7 +190,8 @@ function update(n) {
 
 function computeScore() {
   return numbers.reduce(function(p, c, i, a) {
-    return p + (i === 0 ? 0 : matrix[c.value][a[i - 1].value]);
+    return p + (i === (a.length - 1) ? 0 :
+      matrix[c.value][a[i + 1].value]);
   }, 0);
 }
 

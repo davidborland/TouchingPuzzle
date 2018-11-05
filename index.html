@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <title>Slider</title>
+  <script src="d3.min.js"></script>
+</head>
+
+<body>
+
+<div id="sliderDiv">
+  <svg></svg>
+</div>
+
+<div id="scoreDiv"></div>
+
+<script type="text/javascript">
+
+// Touching matrix
+var matrix = [
+  [0, 2, 4, 3, 3, 4, 5, 2, 5, 4],
+  [1, 0, 1, 1, 0, 1, 1, 0, 1, 1],
+  [4, 2, 0, 3, 3, 4, 4, 2, 4, 4],
+  [5, 2, 4, 0, 3, 4, 5, 2, 5, 4],
+  [5, 2, 4, 3, 0, 4, 5, 2, 5, 4],
+  [4, 1, 4, 3, 2, 0, 4, 1, 4, 3],
+  [4, 1, 4, 3, 2, 3, 0, 1, 4, 3],
+  [5, 2, 4, 3, 3, 4, 5, 0, 5, 4],
+  [5, 2, 4, 3, 3, 4, 5, 2, 0, 4],
+  [5, 2, 4, 3, 3, 4, 5, 2, 5, 0]
+];
+
+// Load images using d3 queue/defer
+var images = d3.range(0, 10).map(function(d) {
+  return d;
+});
+
+var imageWidth = 50;
+var imageHeight = 50;
+
+var width = imageWidth * images.length;
+
+var numbers = images.map(function(d, i) {
+  return {
+    value: i,
+    index: i,
+    image: d
+  };
+});
+
+// Size the SVG container
+var svg = d3.select("#sliderDiv").select("svg")
+    .attr("width", width)
+    .attr("height", imageHeight);
+
+setScore();
+
+// Drag offset
+var offset;
+
+// Drag behavior
+var drag = d3.drag()
+    .on("start", function(d) {
+      d3.select(this).raise();
+
+      // Save the offset
+      offset = d3.mouse(this)[0];
+    })
+    .on("drag", function(d) {
+      // Get the index
+      var i = d.index;
+
+      // Get the event position
+      var x = d3.event.x - offset;
+
+      x = Math.max(0, Math.min(x, width - imageWidth));
+
+      // Move the currently selected number
+      d3.select(this).attr("transform", function(d) {
+        return "translate(" + x +",0)";
+      });
+
+      if (x < left(d) - imageWidth / 2) {
+        // Switch position with left neighbor
+        d.index--;
+
+        var n = numbers[i - 1];
+        n.index++;
+
+        numbers.splice(i - 1, 1);
+        numbers.splice(i, 0, n);
+
+        update(n);
+      }
+      else if (x > right(d) - imageWidth / 2) {
+        // Switch position with right neighbor
+        d.index++;
+
+        var n = numbers[i + 1];
+        n.index--;
+
+        numbers.splice(i, 1);
+        numbers.splice(i + 1, 0, d);
+
+        update(n);
+      }
+    })
+    .on("end", function(d) {
+      update(d);
+      setScore();
+    });
+
+// Bind number data
+var num = svg.selectAll(".number")
+    .data(numbers);
+
+// Enter
+var numEnter = num.enter().append("g")
+    .attr("class", "number")
+    .attr("transform", transform)
+    .on("mouseover", function() {
+      d3.select(this).select("rect")
+          .style("stroke-width", 2)
+    })
+    .on("mouseout", function() {
+      d3.select(this).select("rect")
+          .style("stroke-width", null);
+    })
+    .call(drag);
+
+var fillScale = d3.scaleLinear()
+    .domain([0, numbers.length - 1])
+    .range(["#000", "#fff"]);
+
+numEnter.append("rect")
+    .attr("width", imageWidth)
+    .attr("height", imageHeight)
+    .style("fill", function(d) {
+      return fillScale(d.value);
+    })
+    .style("stroke", "#666");
+
+function left(d) {
+  return d.index * imageWidth;
+}
+
+function right(d) {
+  return left(d) + imageWidth;
+}
+
+function transform(d) {
+  return "translate(" + left(d) + ",0)";
+}
+
+// Update the position of a number
+function update(n) {
+  svg.selectAll(".number").filter(function(d) {
+    return d === n;
+  }).transition()
+    .attr("transform", transform);
+}
+
+function computeScore() {
+  return numbers.reduce(function(p, c, i, a) {
+    return p + (i === 0 ? 0 : matrix[c.value][a[i - 1].value]);
+  }, 0);
+}
+
+function setScore() {
+  d3.select("#scoreDiv")
+      .text("Score: " + computeScore());
+}
+
+</script>
+
+</body>
+</html>

@@ -20,7 +20,24 @@
 
   <h2 id="scoreDiv" class="mb-4"></h2>
 
-  <button type="button" id="resetButton" class="btn btn-primary">Reset</button>
+  <button type="button" id="resetButton" class="btn btn-primary mb-4">Reset</button>
+
+  <p class="text-left">
+    The initial configuration of the puzzle above places the numbers in increasing order from left to right. Every configuration gets a score.  For the initial configuration, the number one block touches 2 squares on its left and 1 square on its right, giving it a score of 1(2 + 1) = 3. The number two block touches 4 squares of its neighboring blocks so its score is 2(4) = 8: Continuing this for every number and summing up every block's score, we get the following as the total score for the configuration:
+  </p>
+
+  <p>
+  	0(2) + 1(3) + 2(4) + 3(6) + 4(7) + 5(8) + 6(5) + 7(6) + 8(9) + 9(4) = 277
+  </p>
+
+  <p class="text-left">
+    <strong>Challenge</strong>: What arrangement produces the largest possible score? The smallest?
+  </p>
+
+  <div class="text-right small">
+    <div>Author: David Borland, RENCI, UNC-Chapel Hill</div>
+    <div><a href="https://github.com/davidborland/TouchingPuzzle">GitHub repository</a></div>
+  </div>
 </div>
 
 <script type="text/javascript">
@@ -60,12 +77,12 @@ var matrix = [
 ];
 
 // Actual image dimensions
-var w = 42,
-    h = 69,
+var w = 75,
+    h = 125,
     aspect = w / h;
 
 // Image display dimensions
-var imageWidth = 50,
+var imageWidth = 60,
     imageHeight = imageWidth / aspect;
 
 // Create number object array
